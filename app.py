@@ -1,38 +1,48 @@
 import streamlit as st
-import cv2
 import numpy as np
+import cv2
 from PIL import Image
 
-st.title("🖼️ Live Image Processing Web App")
+st.set_page_config(page_title="Live Image Processing Web App", page_icon="🖼️", layout="wide")
+st.title("Live Image Processing Web App")
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+filter_name = st.selectbox(
+    "Choose a filter to apply",
+    ["None", "Grayscale", "Smoothing", "Sharpening", "Edge Detection"]
+)
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    img_np = np.array(image)
+if uploaded:
+    pil_img = Image.open(uploaded).convert("RGB")
+    img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    st.image(img_np, caption='Original Image', use_column_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Original")
+        st.image(pil_img, use_container_width=True)
 
-    option = st.selectbox("Choose a filter to apply", 
-                         ["None", "Grayscale", "Smoothing", "Sharpening", "Edge Detection"])
+    processed = img.copy()
 
-    if option == "Grayscale":
-        result = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
-        st.image(result, caption="Grayscale", use_column_width=True)
-
-    elif option == "Smoothing":
-        result = cv2.GaussianBlur(img_np, (9, 9), 0)
-        st.image(result, caption="Smoothed", use_column_width=True)
-
-    elif option == "Sharpening":
+    if filter_name == "Grayscale":
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        processed = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    elif filter_name == "Smoothing":
+        processed = cv2.GaussianBlur(img, (7, 7), 1.2)
+    elif filter_name == "Sharpening":
         kernel = np.array([[0, -1, 0],
                            [-1, 5, -1],
                            [0, -1, 0]])
-        result = cv2.filter2D(img_np, -1, kernel)
-        st.image(result, caption="Sharpened", use_column_width=True)
+        processed = cv2.filter2D(img, -1, kernel)
+    elif filter_name == "Edge Detection":
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 100, 200)
+        processed = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
-    elif option == "Edge Detection":
-        gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
-        result = cv2.Canny(gray, 100, 200)
-        st.image(result, caption="Edges", use_column_width=True)
-        
+    processed_rgb = cv2.cvtColor(processed, cv2.COLOR_BGR2RGB)
+
+    with col2:
+        st.subheader(filter_name if filter_name != "None" else "No Filter")
+        st.image(processed_rgb, use_container_width=True)
+else:
+    st.info("Upload an image to begin.")
+
