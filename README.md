@@ -2,9 +2,7 @@
 
 A Streamlit web app that applies classical image processing filters to uploaded images, with a side-by-side view of the original and the result.
 
-
-
-![App screenshot](screenshot.png)
+**Live demo:** https://bhavya-image-filters.streamlit.app
 
 ## Features
 - Upload JPG or PNG images (large images are downscaled automatically)
